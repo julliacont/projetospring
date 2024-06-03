@@ -1,0 +1,56 @@
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/topics")
+public class TopicController {
+    @Autowired
+    private TopicRepository topicRepository;
+
+    @GetMapping
+    public List<Topic> getAllTopics() {
+        return topicRepository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Topic> getTopicById(@PathVariable Long id) {
+        Optional<Topic> topic = topicRepository.findById(id);
+        return topic.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Topic createTopic(@Valid @RequestBody Topic topic) {
+        return topicRepository.save(topic);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Topic> updateTopic(@PathVariable Long id, @Valid @RequestBody Topic topicDetails) {
+        Optional<Topic> optionalTopic = topicRepository.findById(id);
+        if (optionalTopic.isPresent()) {
+            Topic topic = optionalTopic.get();
+            topic.setTitle(topicDetails.getTitle());
+            topic.setDescription(topicDetails.getDescription());
+            return ResponseEntity.ok(topicRepository.save(topic));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTopic(@PathVariable Long id) {
+        Optional<Topic> optionalTopic = topicRepository.findById(id);
+        if (optionalTopic.isPresent()) {
+            topicRepository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
